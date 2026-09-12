@@ -20,7 +20,6 @@ import "C"
 
 import (
 	"fmt"
-	"os"
 	"sync/atomic"
 	"syscall"
 	"unsafe"
@@ -168,20 +167,4 @@ func submit_to_sq(r *ring, op uint8, fd int32, addr uintptr, len uint32, offset 
 	if err != 0 {
 		fmt.Printf("enter: %v\n", err)
 	}
-}
-
-func main() {
-	var r ring
-	errno := setup(2, &r, 0)
-	println(errno)
-
-	f, err := os.Create("./example.txt")
-	if err != nil {
-		fmt.Printf("error creating file: %v\n", err)
-		os.Exit(1)
-	}
-
-	txt := []byte("Hello World!\n")
-
-	submit_to_sq(&r, 23, int32(f.Fd()), uintptr(unsafe.Pointer(&txt[0])), uint32(len(txt)), 0)
 }
