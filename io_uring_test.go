@@ -32,6 +32,9 @@ func TestWriteToFile(t *testing.T) {
 	txt := []byte(wanted)
 
 	submit_to_sq(&r, 23, int32(f.Fd()), uintptr(unsafe.Pointer(&txt[0])), uint32(len(txt)), 0)
+
+	res, ok := read_from_cq(&r)
+	t.Logf("%#v: %v\n", res, ok)
 }
 
 func TestReadFromFile(t *testing.T) {

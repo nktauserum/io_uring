@@ -84,10 +84,7 @@ func setup(entries uint32, r *ring, flags uint32) syscall.Errno {
 	r.sq.sqRingFd = unsafe.Pointer(sqPtr)
 
 	if p.features&ioringFeatSingleMmap != 0 {
-		if r.cq.ringSz > r.sq.ringSz {
-			r.sq.ringSz = r.cq.ringSz
-		}
-		r.cq.ringSz = r.sq.ringSz
+		r.cq.cqRingFd = r.sq.sqRingFd
 	} else {
 		cqPtr, _, e := syscall.RawSyscall6(
 			syscall.SYS_MMAP,
@@ -167,4 +164,23 @@ func submit_to_sq(r *ring, op uint8, fd int32, addr uintptr, len uint32, offset 
 	if err != 0 {
 		fmt.Printf("enter: %v\n", err)
 	}
+}
+
+func read_from_cq(r *ring) (int32, bool) {
+	head := atomic.LoadUint32(r.cq.khead)
+	
+	if head == atomic.LoadUint32(r.cq.ktail) {
+		return -1, false // empty buffer
+	}
+
+	cqe := r.cq.cqes[head & atomic.LoadUint32(r.cq.kringMask)]
+	if cqe.res < 0 {
+		return cqe.res, false
+	}
+
+	head += 1
+
+	atomic.StoreUint32(r.cq.khead, head)
+
+	return cqe.res, true
 }
