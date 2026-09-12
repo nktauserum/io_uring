@@ -20,6 +20,8 @@ import "C"
 
 import (
 	"fmt"
+	"os"
+	"sync/atomic"
 	"syscall"
 	"unsafe"
 )
@@ -29,6 +31,7 @@ const (
 	ioringOffCqRing      = uint64(0x8000000)
 	ioringOffSqes        = uint64(0x10000000)
 	ioringFeatSingleMmap = uint32(0x1)
+	ioringEnterGetEvents = uint64(1) << 0
 )
 
 var nSig, ioUringSetupSys, ioUringEnterSys = func() (int, int, int) {
@@ -47,6 +50,11 @@ func unmap(sq *sQueue, cq *cQueue) {
 	if cq.cqRingFd != nil && cq.cqRingFd != sq.sqRingFd {
 		_, _, _ = syscall.RawSyscall(syscall.SYS_MUNMAP, uintptr(cq.cqRingFd), uintptr(cq.ringSz), 0)
 	}
+}
+
+func enter(ringFd int, toSubmit, minComplete, flags uint32) syscall.Errno {
+	_, _, err := syscall.RawSyscall6(uintptr(ioUringEnterSys), uintptr(ringFd), uintptr(toSubmit), uintptr(minComplete), uintptr(flags), 0, 0)
+	return err
 }
 
 func setup(entries uint32, r *ring, flags uint32) syscall.Errno {
@@ -140,10 +148,42 @@ func setup(entries uint32, r *ring, flags uint32) syscall.Errno {
 	return 0
 }
 
+func submit_to_sq(r *ring, op uint8, fd int32, addr uintptr, len uint32, offset uint64) {
+	tail := atomic.LoadUint32(r.sq.ktail)
+	index := tail & atomic.LoadUint32(r.sq.kringMask)
+
+	sqe := &r.sq.sqes[index]
+	sqe.opcode = op
+	sqe.fd = fd
+	sqe.addr = uint64(addr)
+	sqe.len = len
+	sqe.off = offset
+
+	r.sq.array[index] = index
+	tail += 1
+
+	atomic.StoreUint32(r.sq.ktail, tail)
+
+	err := enter(r.ringFd, 1, 1, uint32(ioringEnterGetEvents))
+	if err != 0 {
+		fmt.Printf("enter: %v\n", err)
+	}
+}
+
 func main() {
 	var r ring
 	errno := setup(2, &r, 0)
 	println(errno)
+
+	f, err := os.Create("./example.txt")
+	if err != nil {
+		fmt.Printf("error creating file: %v\n", err)
+		os.Exit(1)
+	}
+
+	txt := []byte("Hello World!\n")
+
+	submit_to_sq(&r, 23, int32(f.Fd()), uintptr(unsafe.Pointer(&txt[0])), uint32(len(txt)), 0)
 }
 
 type (
