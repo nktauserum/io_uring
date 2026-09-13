@@ -20,7 +20,7 @@ func TestWriteToFile(t *testing.T) {
 	var r ring
 	errno := setup(2, &r, 0)
 	if errno != 0 {
-		t.Fail()
+		t.Fatalf("Error setup io_uring: code %v\n", errno)
 	}
 
 	f, err := os.Create("./example.txt")
@@ -34,7 +34,10 @@ func TestWriteToFile(t *testing.T) {
 	submit_to_sq(&r, 23, int32(f.Fd()), uintptr(unsafe.Pointer(&txt[0])), uint32(len(txt)), 0)
 
 	res, ok := read_from_cq(&r)
-	t.Logf("%#v: %v\n", res, ok)
+	if !ok {
+		t.Fail()
+	}
+	t.Logf("Write %v bytes to file\n", res)
 }
 
 func TestReadFromFile(t *testing.T) {
