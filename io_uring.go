@@ -170,19 +170,34 @@ func (r *Ring) submitToSQ(op uint8, fd int32, addr uintptr, len uint32, offset u
 }
 
 // CQ - Completions Queue
-func (r *Ring) readFromCQ() (int32, bool) {
+func (r *Ring) readFromCQ() (cqe, bool) {
 	head := atomic.LoadUint32(r.cq.khead)
 
 	if head == atomic.LoadUint32(r.cq.ktail) {
-		return 0, false // empty buffer
+		return cqe{}, false // empty buffer
 	}
 
 	defer atomic.StoreUint32(r.cq.khead, head+1)
 
 	cqe := r.cq.cqes[head&atomic.LoadUint32(r.cq.kringMask)]
-	if cqe.res < 0 {
-		return cqe.res, false
-	}
-
-	return cqe.res, true
+	return cqe, true
 }
+
+func (r *Ring) ListenCQ(ch chan cqe) {
+	for {
+		_, err := enter(r.ringFd, 0, 1, uint32(ioringEnterGetEvents))
+		if err != 0 {
+			continue
+		}
+
+		for {
+			cqe, ok := r.readFromCQ()
+			if !ok {
+				break	
+			}
+
+			ch <- cqe
+		}
+	}
+}
+// func (r *Ring) SubmitRead()

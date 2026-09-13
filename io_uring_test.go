@@ -38,11 +38,11 @@ func TestWriteToFile(t *testing.T) {
 
 	time.Sleep(wait_time)
 
-	res, ok := r.readFromCQ()
+	cqe, ok := r.readFromCQ()
 	if !ok {
 		t.Fail()
 	}
-	t.Logf("Write %v bytes to file\n", res)
+	t.Logf("Write %v bytes to file\n", cqe.res)
 }
 
 func TestReadFromFile(t *testing.T) {
@@ -68,4 +68,29 @@ func TestReadFromFile(t *testing.T) {
 	if string(buf[:len(wanted)]) != wanted {
 		t.Fatalf("Error: got %v, wanted %v\n", string(buf), wanted)
 	}
+}
+
+func TestListenCQ(t *testing.T) {
+	var r Ring
+	errno := setup(2, &r, 0)
+	if errno != 0 {
+		t.Fatalf("Error setup io_uring: code %v\n", errno)
+	}
+
+	f, err := os.Create("./example_listen.txt")
+	if err != nil {
+		t.Fatalf("error creating file: %v\n", err)
+	}
+	defer f.Close()
+
+	txt := []byte(wanted)
+
+	ret := r.submitToSQ(23, int32(f.Fd()), uintptr(unsafe.Pointer(&txt[0])), uint32(len(txt)), 0)
+	t.Logf("Submitted %v events to SQ\n", ret)
+
+	ch := make(chan cqe)
+	go r.ListenCQ(ch)
+
+	cqe := <-ch
+	t.Logf("Write %v bytes to file\n", cqe.res)
 }
