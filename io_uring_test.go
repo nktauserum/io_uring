@@ -7,12 +7,11 @@ import (
 	"unsafe"
 )
 
-var wanted = "Hello World!"
-
+const wanted = "Hello World!"
 const wait_time = 50 * time.Millisecond
 
 func TestSetup(t *testing.T) {
-	var r ring
+	var r Ring
 	errno := setup(2, &r, 0)
 	if errno != 0 {
 		t.Fail()
@@ -20,7 +19,7 @@ func TestSetup(t *testing.T) {
 }
 
 func TestWriteToFile(t *testing.T) {
-	var r ring
+	var r Ring
 	errno := setup(2, &r, 0)
 	if errno != 0 {
 		t.Fatalf("Error setup io_uring: code %v\n", errno)
@@ -34,12 +33,12 @@ func TestWriteToFile(t *testing.T) {
 
 	txt := []byte(wanted)
 
-	ret := submit_to_sq(&r, 23, int32(f.Fd()), uintptr(unsafe.Pointer(&txt[0])), uint32(len(txt)), 0)
+	ret := r.submitToSQ(23, int32(f.Fd()), uintptr(unsafe.Pointer(&txt[0])), uint32(len(txt)), 0)
 	t.Logf("Submitted %v events to SQ\n", ret)
 
 	time.Sleep(wait_time)
 
-	res, ok := read_from_cq(&r)
+	res, ok := r.readFromCQ()
 	if !ok {
 		t.Fail()
 	}
@@ -47,7 +46,7 @@ func TestWriteToFile(t *testing.T) {
 }
 
 func TestReadFromFile(t *testing.T) {
-	var r ring
+	var r Ring
 	errno := setup(2, &r, 0)
 	if errno != 0 {
 		t.Fail()
@@ -61,7 +60,7 @@ func TestReadFromFile(t *testing.T) {
 	defer os.Remove("./example.txt")
 
 	buf := make([]byte, 1024)
-	ret := submit_to_sq(&r, 22, int32(f.Fd()), uintptr(unsafe.Pointer(&buf[0])), 1024, 0)
+	ret := r.submitToSQ(22, int32(f.Fd()), uintptr(unsafe.Pointer(&buf[0])), 1024, 0)
 	t.Logf("Submitted %v events to SQ\n", ret)
 
 	time.Sleep(wait_time)
