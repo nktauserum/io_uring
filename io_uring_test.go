@@ -31,7 +31,9 @@ func TestWriteToFile(t *testing.T) {
 
 	txt := []byte(wanted)
 
-	submit_to_sq(&r, 23, int32(f.Fd()), uintptr(unsafe.Pointer(&txt[0])), uint32(len(txt)), 0)
+	ret := submit_to_sq(&r, 23, int32(f.Fd()), uintptr(unsafe.Pointer(&txt[0])), uint32(len(txt)), 0)
+	t.Logf("Submitted %v events to SQ\n", ret)
+
 
 	res, ok := read_from_cq(&r)
 	if !ok {
@@ -55,7 +57,8 @@ func TestReadFromFile(t *testing.T) {
 	defer os.Remove("./example.txt")
 
 	buf := make([]byte, 1024)
-	submit_to_sq(&r, 22, int32(f.Fd()), uintptr(unsafe.Pointer(&buf[0])), 1024, 0)
+	ret := submit_to_sq(&r, 22, int32(f.Fd()), uintptr(unsafe.Pointer(&buf[0])), 1024, 0)
+	t.Logf("Submitted %v events to SQ\n", ret)
 
 	if string(buf[:len(wanted)]) != wanted {
 		t.Fatalf("Error: got %v, wanted %v\n", string(buf), wanted)

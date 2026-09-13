@@ -51,9 +51,9 @@ func unmap(sq *sQueue, cq *cQueue) {
 	}
 }
 
-func enter(ringFd int, toSubmit, minComplete, flags uint32) syscall.Errno {
-	_, _, err := syscall.RawSyscall6(uintptr(ioUringEnterSys), uintptr(ringFd), uintptr(toSubmit), uintptr(minComplete), uintptr(flags), 0, 0)
-	return err
+func enter(ringFd int, toSubmit, minComplete, flags uint32) (int, syscall.Errno) {
+	ret, _, err := syscall.RawSyscall6(uintptr(ioUringEnterSys), uintptr(ringFd), uintptr(toSubmit), uintptr(minComplete), uintptr(flags), 0, 0)
+	return int(ret), err
 }
 
 func setup(entries uint32, r *ring, flags uint32) syscall.Errno {
@@ -144,7 +144,7 @@ func setup(entries uint32, r *ring, flags uint32) syscall.Errno {
 	return 0
 }
 
-func submit_to_sq(r *ring, op uint8, fd int32, addr uintptr, len uint32, offset uint64) {
+func submit_to_sq(r *ring, op uint8, fd int32, addr uintptr, len uint32, offset uint64) int {
 	tail := atomic.LoadUint32(r.sq.ktail)
 	index := tail & atomic.LoadUint32(r.sq.kringMask)
 
@@ -160,20 +160,22 @@ func submit_to_sq(r *ring, op uint8, fd int32, addr uintptr, len uint32, offset 
 
 	atomic.StoreUint32(r.sq.ktail, tail)
 
-	err := enter(r.ringFd, 1, 1, uint32(ioringEnterGetEvents))
+	ret, err := enter(r.ringFd, 1, 0, 0)
 	if err != 0 {
 		fmt.Printf("enter: %v\n", err)
 	}
+
+	return ret
 }
 
 func read_from_cq(r *ring) (int32, bool) {
 	head := atomic.LoadUint32(r.cq.khead)
-	
+
 	if head == atomic.LoadUint32(r.cq.ktail) {
 		return -1, false // empty buffer
 	}
 
-	cqe := r.cq.cqes[head & atomic.LoadUint32(r.cq.kringMask)]
+	cqe := r.cq.cqes[head&atomic.LoadUint32(r.cq.kringMask)]
 	if cqe.res < 0 {
 		return cqe.res, false
 	}
