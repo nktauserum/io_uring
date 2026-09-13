@@ -172,17 +172,15 @@ func read_from_cq(r *ring) (int32, bool) {
 	head := atomic.LoadUint32(r.cq.khead)
 
 	if head == atomic.LoadUint32(r.cq.ktail) {
-		return -1, false // empty buffer
+		return 0, false // empty buffer
 	}
+
+	defer atomic.StoreUint32(r.cq.khead, head+1)
 
 	cqe := r.cq.cqes[head&atomic.LoadUint32(r.cq.kringMask)]
 	if cqe.res < 0 {
 		return cqe.res, false
 	}
-
-	head += 1
-
-	atomic.StoreUint32(r.cq.khead, head)
 
 	return cqe.res, true
 }

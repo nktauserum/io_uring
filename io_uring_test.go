@@ -3,10 +3,12 @@ package io_uring
 import (
 	"os"
 	"testing"
+	"time"
 	"unsafe"
 )
 
 var wanted = "Hello World!"
+const wait_time = 50*time.Millisecond
 
 func TestSetup(t *testing.T) {
 	var r ring
@@ -34,6 +36,7 @@ func TestWriteToFile(t *testing.T) {
 	ret := submit_to_sq(&r, 23, int32(f.Fd()), uintptr(unsafe.Pointer(&txt[0])), uint32(len(txt)), 0)
 	t.Logf("Submitted %v events to SQ\n", ret)
 
+	time.Sleep(wait_time)
 
 	res, ok := read_from_cq(&r)
 	if !ok {
@@ -59,6 +62,8 @@ func TestReadFromFile(t *testing.T) {
 	buf := make([]byte, 1024)
 	ret := submit_to_sq(&r, 22, int32(f.Fd()), uintptr(unsafe.Pointer(&buf[0])), 1024, 0)
 	t.Logf("Submitted %v events to SQ\n", ret)
+
+	time.Sleep(wait_time)
 
 	if string(buf[:len(wanted)]) != wanted {
 		t.Fatalf("Error: got %v, wanted %v\n", string(buf), wanted)
