@@ -56,7 +56,7 @@ func enter(ringFd int, toSubmit, minComplete, flags uint32) (int, syscall.Errno)
 	return int(ret), err
 }
 
-func setup(entries uint32, r *ring, flags uint32) syscall.Errno {
+func setup(entries uint32, r *Ring, flags uint32) syscall.Errno {
 	var p ioParams
 	p.flags = flags
 
@@ -144,7 +144,8 @@ func setup(entries uint32, r *ring, flags uint32) syscall.Errno {
 	return 0
 }
 
-func submit_to_sq(r *ring, op uint8, fd int32, addr uintptr, len uint32, offset uint64) int {
+// SQ - Submissions Queue
+func submitToSQ(r *Ring, op uint8, fd int32, addr uintptr, len uint32, offset uint64) int {
 	tail := atomic.LoadUint32(r.sq.ktail)
 	index := tail & atomic.LoadUint32(r.sq.kringMask)
 
@@ -168,7 +169,8 @@ func submit_to_sq(r *ring, op uint8, fd int32, addr uintptr, len uint32, offset 
 	return ret
 }
 
-func read_from_cq(r *ring) (int32, bool) {
+// CQ - Completions Queue
+func (r *Ring) readFromCQ() (int32, bool) {
 	head := atomic.LoadUint32(r.cq.khead)
 
 	if head == atomic.LoadUint32(r.cq.ktail) {

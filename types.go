@@ -1,11 +1,18 @@
 package io_uring
 
 import (
-	"syscall"
 	"unsafe"
 )
 
 type (
+	Ring struct {
+		sq       sQueue
+		cq       cQueue
+		flags    uint32
+		ringFd   int
+		features uint32
+	}
+
 	sqe struct {
 		opcode   uint8  /* type of operation for this sqe */
 		flags    uint8  /* IOSQE_ flags */
@@ -88,18 +95,5 @@ type (
 		resv         [4]uint32
 		sqOff        ioSqOffsets
 		cqOff        ioCqOffsets
-	}
-
-	ring struct {
-		sq       sQueue
-		cq       cQueue
-		flags    uint32
-		ringFd   int
-		features uint32
-	}
-
-	cqUserData struct {
-		buf syscall.Iovec
-		cap int
 	}
 )

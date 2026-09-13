@@ -8,7 +8,8 @@ import (
 )
 
 var wanted = "Hello World!"
-const wait_time = 50*time.Millisecond
+
+const wait_time = 50 * time.Millisecond
 
 func TestSetup(t *testing.T) {
 	var r ring
