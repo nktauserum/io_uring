@@ -33,6 +33,11 @@ const (
 	ioringEnterGetEvents = uint64(1) << 0
 )
 
+const (
+	opRead = 22
+	opWrite = 23
+)
+
 var nSig, ioUringSetupSys, ioUringEnterSys = func() (int, int, int) {
 	nSig := int(C.nsig())
 	var ioSetupSys, ioEnterSys C.int
@@ -200,4 +205,11 @@ func (r *Ring) ListenCQ(ch chan cqe) {
 		}
 	}
 }
-// func (r *Ring) SubmitRead()
+
+func (r *Ring) SubmitRead(fd int32, buf []byte) int {
+	return r.submitToSQ(opRead, fd, uintptr(unsafe.Pointer(&buf[0])), uint32(len(buf)), 0)
+}
+
+func (r *Ring) SubmitWrite(fd int32, buf []byte) int {
+	return r.submitToSQ(opWrite, fd, uintptr(unsafe.Pointer(&buf[0])), uint32(len(buf)), 0)
+}
