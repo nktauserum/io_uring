@@ -206,10 +206,10 @@ func (r *Ring) ListenCQ(ch chan cqe) {
 	}
 }
 
-func (r *Ring) SubmitRead(fd int32, buf []byte) int {
-	return r.submitToSQ(opRead, fd, uintptr(unsafe.Pointer(&buf[0])), uint32(len(buf)), 0)
+func (r *Ring) SubmitRead(fd uintptr, buf []byte) int {
+	return r.submitToSQ(opRead, int32(fd), uintptr(unsafe.Pointer(&buf[0])), uint32(len(buf)), 0)
 }
 
-func (r *Ring) SubmitWrite(fd int32, buf []byte) int {
-	return r.submitToSQ(opWrite, fd, uintptr(unsafe.Pointer(&buf[0])), uint32(len(buf)), 0)
+func (r *Ring) SubmitWrite(fd uintptr, buf []byte) int {
+	return r.submitToSQ(opWrite, int32(fd), uintptr(unsafe.Pointer(&buf[0])), uint32(len(buf)), 0)
 }

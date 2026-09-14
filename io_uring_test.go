@@ -94,3 +94,29 @@ func TestListenCQ(t *testing.T) {
 	cqe := <-ch
 	t.Logf("Write %v bytes to file\n", cqe.res)
 }
+
+func TestSubmitWrite(t *testing.T) {
+	var r Ring
+	errno := setup(2, &r, 0)
+	if errno != 0 {
+		t.Fatalf("Error setup io_uring: code %v\n", errno)
+	}
+
+	f, err := os.Create("./example_listen.txt")
+	if err != nil {
+		t.Fatalf("error creating file: %v\n", err)
+	}
+	defer f.Close()
+
+	txt := []byte(wanted)
+
+	ret := r.SubmitWrite(f.Fd(), txt) 
+	t.Logf("Submitted %v events to SQ\n", ret)
+
+	ch := make(chan cqe)
+	go r.ListenCQ(ch)
+
+	cqe := <-ch
+	t.Logf("Write %v bytes to file\n", cqe.res)
+
+}
