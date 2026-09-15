@@ -18,7 +18,7 @@ func TestSetup(t *testing.T) {
 	}
 }
 
-func TestWriteToFile(t *testing.T) {
+func TestSubmitToSQ(t *testing.T) {
 	var r Ring
 	errno := setup(2, &r, 0)
 	if errno != 0 {
@@ -30,6 +30,7 @@ func TestWriteToFile(t *testing.T) {
 		t.Fatalf("error creating file: %v\n", err)
 	}
 	defer f.Close()
+	defer os.Remove("./example.txt")
 
 	txt := []byte(wanted)
 
@@ -38,29 +39,13 @@ func TestWriteToFile(t *testing.T) {
 
 	time.Sleep(wait_time)
 
-	cqe, ok := r.readFromCQ()
+	_, ok := r.readFromCQ()
 	if !ok {
 		t.Fail()
 	}
-	t.Logf("Write %v bytes to file\n", cqe.res)
-}
-
-func TestReadFromFile(t *testing.T) {
-	var r Ring
-	errno := setup(2, &r, 0)
-	if errno != 0 {
-		t.Fail()
-	}
-
-	f, err := os.Open("./example.txt")
-	if err != nil {
-		t.Fatalf("error os.Open(): %v\n", err)
-	}
-	defer f.Close()
-	defer os.Remove("./example.txt")
 
 	buf := make([]byte, 1024)
-	ret := r.submitToSQ(22, int32(f.Fd()), uintptr(unsafe.Pointer(&buf[0])), 1024, 0)
+	ret = r.submitToSQ(22, int32(f.Fd()), uintptr(unsafe.Pointer(&buf[0])), 1024, 0)
 	t.Logf("Submitted %v events to SQ\n", ret)
 
 	time.Sleep(wait_time)
@@ -110,7 +95,7 @@ func TestSubmitWrite(t *testing.T) {
 
 	txt := []byte(wanted)
 
-	ret := r.SubmitWrite(f.Fd(), txt) 
+	ret := r.SubmitWrite(f.Fd(), txt)
 	t.Logf("Submitted %v events to SQ\n", ret)
 
 	ch := make(chan cqe)
@@ -118,5 +103,4 @@ func TestSubmitWrite(t *testing.T) {
 
 	cqe := <-ch
 	t.Logf("Write %v bytes to file\n", cqe.res)
-
 }

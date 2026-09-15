@@ -34,7 +34,7 @@ const (
 )
 
 const (
-	opRead = 22
+	opRead  = 22
 	opWrite = 23
 )
 
@@ -198,7 +198,7 @@ func (r *Ring) ListenCQ(ch chan cqe) {
 		for {
 			cqe, ok := r.readFromCQ()
 			if !ok {
-				break	
+				break
 			}
 
 			ch <- cqe
