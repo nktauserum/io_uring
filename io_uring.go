@@ -182,33 +182,3 @@ func (r *Ring) readFromCQ() (cqe, bool) {
 	cqe := r.cq.cqes[head&atomic.LoadUint32(r.cq.kringMask)]
 	return cqe, true
 }
-
-func (r *Ring) ListenCQ(ch chan cqe) {
-	for {
-		_, err := enter(r.ringFd, 0, 1, uint32(ioringEnterGetEvents))
-		if err != 0 {
-			continue
-		}
-
-		for {
-			cqe, ok := r.readFromCQ()
-			if !ok {
-				break
-			}
-
-			ch <- cqe
-		}
-	}
-}
-
-func (r *Ring) SubmitRead(fd uintptr, buf []byte) (int, bool) {
-	r.submitToSQ(opRead, int32(fd), uintptr(unsafe.Pointer(&buf[0])), uint32(len(buf)), 0)
-	ret, errno := enter(r.ringFd, 1, 0, 0)
-	return ret, errno != 0
-}
-
-func (r *Ring) SubmitWrite(fd uintptr, buf []byte) (int, bool) {
-	r.submitToSQ(opWrite, int32(fd), uintptr(unsafe.Pointer(&buf[0])), uint32(len(buf)), 0)
-	ret, errno := enter(r.ringFd, 1, 0, 0)
-	return ret, errno != 0
-}
