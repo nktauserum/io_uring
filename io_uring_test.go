@@ -78,6 +78,14 @@ func TestListenCQ(t *testing.T) {
 
 	cqe := <-ch
 	t.Logf("Write %v bytes to file\n", cqe.res)
+
+	buf := make([]byte, 1024)
+	r.SubmitRead(f.Fd(), buf)
+	<-ch
+	if string(buf[:len(wanted)]) != wanted {
+		t.Fatalf("Error: got %v, wanted %v\n", string(buf), wanted)
+	}
+
 }
 
 func TestSubmitWrite(t *testing.T) {
