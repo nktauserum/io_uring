@@ -13,7 +13,7 @@ type (
 		features uint32
 	}
 
-	sqe struct {
+	SQE struct {
 		opcode   uint8  /* type of operation for this sqe */
 		flags    uint8  /* IOSQE_ flags */
 		ioprio   uint16 /* ioprio for the request */
@@ -34,7 +34,7 @@ type (
 		kflags       *uint32
 		kdropped     *uint32
 		array        []uint32
-		sqes         []sqe
+		sqes         []SQE
 		sqeHead      uint32
 		sqeTail      uint32
 		ringSz       uint32
@@ -43,7 +43,7 @@ type (
 	}
 
 	// IO completion data structure (Completion Queue Entry)
-	cqe struct {
+	CQE struct {
 		userData uint64
 		res      int32
 		flags    uint32
@@ -56,7 +56,7 @@ type (
 		kringEntries *uint32
 		kflags       *uint32
 		koverflow    *uint32
-		cqes         []cqe
+		cqes         []CQE
 		ringSz       uint32
 		cqRingFd     unsafe.Pointer
 		pad          [4]uint32

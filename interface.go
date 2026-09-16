@@ -19,7 +19,7 @@ func NewRingWithEntries(entries uint32) (*Ring, syscall.Errno) {
 	return ring, errno
 }
 
-func (r *Ring) ListenCQ(ch chan cqe) {
+func (r *Ring) ListenCQ(ch chan CQE) {
 	for {
 		_, err := enter(r.ringFd, 0, 1, uint32(ioringEnterGetEvents))
 		if err != 0 {

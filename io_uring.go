@@ -71,7 +71,7 @@ func setup(entries uint32, r *Ring, flags uint32) syscall.Errno {
 
 	r.ringFd = int(r1)
 	r.sq.ringSz = p.sqOff.array + p.sqEntries*uint32(unsafe.Sizeof(uint32(0)))
-	r.cq.ringSz = p.cqOff.cqes + p.cqEntries*uint32(unsafe.Sizeof(cqe{}))
+	r.cq.ringSz = p.cqOff.cqes + p.cqEntries*uint32(unsafe.Sizeof(CQE{}))
 
 	sqPtr, _, err := syscall.RawSyscall6(
 		syscall.SYS_MMAP, 0,
@@ -119,7 +119,7 @@ func setup(entries uint32, r *Ring, flags uint32) syscall.Errno {
 	sqes, _, e := syscall.RawSyscall6(
 		syscall.SYS_MMAP,
 		0,
-		uintptr(p.sqEntries*uint32(unsafe.Sizeof(sqe{}))),
+		uintptr(p.sqEntries*uint32(unsafe.Sizeof(SQE{}))),
 		syscall.PROT_READ|syscall.PROT_WRITE,
 		syscall.MAP_SHARED|syscall.MAP_POPULATE,
 		uintptr(r.ringFd),
@@ -128,7 +128,7 @@ func setup(entries uint32, r *Ring, flags uint32) syscall.Errno {
 		unmap(&r.sq, &r.cq)
 		return e
 	}
-	sqeSlice := unsafe.Slice((*sqe)(unsafe.Pointer(sqes)), int(p.sqEntries))
+	sqeSlice := unsafe.Slice((*SQE)(unsafe.Pointer(sqes)), int(p.sqEntries))
 	sq.sqes = sqeSlice
 
 	cq := &r.cq
@@ -138,7 +138,7 @@ func setup(entries uint32, r *Ring, flags uint32) syscall.Errno {
 	cq.kringEntries = (*uint32)(unsafe.Pointer(unsafe.Add(r.cq.cqRingFd, p.cqOff.ringEntries)))
 	cq.koverflow = (*uint32)(unsafe.Pointer(unsafe.Add(r.cq.cqRingFd, p.cqOff.overflow)))
 
-	cqeSlice := unsafe.Slice((*cqe)(unsafe.Pointer(unsafe.Add(r.cq.cqRingFd, p.cqOff.cqes))), int(p.cqEntries))
+	cqeSlice := unsafe.Slice((*CQE)(unsafe.Pointer(unsafe.Add(r.cq.cqRingFd, p.cqOff.cqes))), int(p.cqEntries))
 	cq.cqes = cqeSlice
 
 	r.features = p.features
@@ -168,11 +168,11 @@ func (r *Ring) submitToSQ(op uint8, fd int32, addr uintptr, len uint32, offset u
 }
 
 // CQ - Completions Queue
-func (r *Ring) readFromCQ() (cqe, bool) {
+func (r *Ring) readFromCQ() (CQE, bool) {
 	head := atomic.LoadUint32(r.cq.khead)
 
 	if head == atomic.LoadUint32(r.cq.ktail) {
-		return cqe{}, false // empty buffer
+		return CQE{}, false // empty buffer
 	}
 
 	defer atomic.StoreUint32(r.cq.khead, head+1)
