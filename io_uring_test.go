@@ -71,7 +71,9 @@ func TestListenCQ(t *testing.T) {
 	r.submitToSQ(23, int32(f.Fd()), uintptr(unsafe.Pointer(&txt[0])), uint32(len(txt)), 0)
 
 	ch := make(chan CQE)
-	go r.ListenCQ(ch)
+	go r.ListenCQ(func (cqe CQE) {
+		ch <- cqe
+	})
 
 	cqe := <-ch
 	t.Logf("Write %v bytes to file\n", cqe.res)
@@ -104,7 +106,9 @@ func TestSubmitWrite(t *testing.T) {
 	t.Logf("Submitted %v events to SQ\n", ret)
 
 	ch := make(chan CQE)
-	go r.ListenCQ(ch)
+	go r.ListenCQ(func (cqe CQE) {
+		ch <- cqe
+	})
 
 	cqe := <-ch
 	t.Logf("Write %v bytes to file\n", cqe.res)
