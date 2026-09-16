@@ -34,8 +34,7 @@ func TestSubmitToSQ(t *testing.T) {
 
 	txt := []byte(wanted)
 
-	ret := r.submitToSQ(23, int32(f.Fd()), uintptr(unsafe.Pointer(&txt[0])), uint32(len(txt)), 0)
-	t.Logf("Submitted %v events to SQ\n", ret)
+	r.submitToSQ(23, int32(f.Fd()), uintptr(unsafe.Pointer(&txt[0])), uint32(len(txt)), 0)
 
 	time.Sleep(wait_time)
 
@@ -45,8 +44,7 @@ func TestSubmitToSQ(t *testing.T) {
 	}
 
 	buf := make([]byte, 1024)
-	ret = r.submitToSQ(22, int32(f.Fd()), uintptr(unsafe.Pointer(&buf[0])), 1024, 0)
-	t.Logf("Submitted %v events to SQ\n", ret)
+	r.submitToSQ(22, int32(f.Fd()), uintptr(unsafe.Pointer(&buf[0])), 1024, 0)
 
 	time.Sleep(wait_time)
 
@@ -70,8 +68,7 @@ func TestListenCQ(t *testing.T) {
 
 	txt := []byte(wanted)
 
-	ret := r.submitToSQ(23, int32(f.Fd()), uintptr(unsafe.Pointer(&txt[0])), uint32(len(txt)), 0)
-	t.Logf("Submitted %v events to SQ\n", ret)
+	r.submitToSQ(23, int32(f.Fd()), uintptr(unsafe.Pointer(&txt[0])), uint32(len(txt)), 0)
 
 	ch := make(chan cqe)
 	go r.ListenCQ(ch)
@@ -103,7 +100,10 @@ func TestSubmitWrite(t *testing.T) {
 
 	txt := []byte(wanted)
 
-	ret := r.SubmitWrite(f.Fd(), txt)
+	ret, success := r.SubmitWrite(f.Fd(), txt)
+	if !success {
+		t.Fail()
+	}
 	t.Logf("Submitted %v events to SQ\n", ret)
 
 	ch := make(chan cqe)
