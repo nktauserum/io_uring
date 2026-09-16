@@ -3,10 +3,6 @@ package io_uring
 // #include <signal.h>
 // #include <syscall.h>
 //
-// int nsig() {
-//     return _NSIG;
-// }
-//
 // int syscall_nums(int *io_uring_setup, int *io_uring_enter) {
 // #if defined(__NR_io_uring_setup) && defined(__NR_io_uring_enter)
 //     *io_uring_setup = __NR_io_uring_setup;
@@ -38,15 +34,14 @@ const (
 	opWrite = 23
 )
 
-var nSig, ioUringSetupSys, ioUringEnterSys = func() (int, int, int) {
-	nSig := int(C.nsig())
+var ioUringSetupSys, ioUringEnterSys = func() (int, int) {
 	var ioSetupSys, ioEnterSys C.int
 	C.syscall_nums(&ioSetupSys, &ioEnterSys)
 	if ioSetupSys == -1 || ioEnterSys == -1 {
 		panic("io_uring is not supported")
 	}
 
-	return nSig, int(ioSetupSys), int(ioEnterSys)
+	return int(ioSetupSys), int(ioEnterSys)
 }()
 
 func unmap(sq *sQueue, cq *cQueue) {
