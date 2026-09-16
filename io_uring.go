@@ -20,7 +20,6 @@ package io_uring
 import "C"
 
 import (
-	"fmt"
 	"sync/atomic"
 	"syscall"
 	"unsafe"
@@ -67,7 +66,6 @@ func setup(entries uint32, r *Ring, flags uint32) syscall.Errno {
 
 	r1, _, err := syscall.RawSyscall(uintptr(ioUringSetupSys), uintptr(entries), uintptr(unsafe.Pointer(&p)), 0)
 	if err != 0 {
-		fmt.Printf("error syscall setup: %v\n", err)
 		return err
 	}
 
@@ -83,7 +81,6 @@ func setup(entries uint32, r *Ring, flags uint32) syscall.Errno {
 		uintptr(r.ringFd),
 		uintptr(ioringOffSqRing))
 	if err != 0 {
-		fmt.Printf("error mmap syscall: %v\n", err)
 		return err
 	}
 	r.sq.sqRingFd = unsafe.Pointer(sqPtr)
@@ -166,11 +163,7 @@ func (r *Ring) submitToSQ(op uint8, fd int32, addr uintptr, len uint32, offset u
 
 	atomic.StoreUint32(r.sq.ktail, tail)
 
-	ret, err := enter(r.ringFd, 1, 0, 0)
-	if err != 0 {
-		fmt.Printf("enter: %v\n", err)
-	}
-
+	ret, _ := enter(r.ringFd, 1, 0, 0)
 	return ret
 }
 
