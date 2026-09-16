@@ -44,9 +44,9 @@ type (
 
 	// IO completion data structure (Completion Queue Entry)
 	CQE struct {
-		userData uint64
-		res      int32
-		flags    uint32
+		UserData uint64
+		Res      int32
+		Flags    uint32
 	}
 
 	cQueue struct {

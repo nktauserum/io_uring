@@ -76,7 +76,7 @@ func TestListenCQ(t *testing.T) {
 	})
 
 	cqe := <-ch
-	t.Logf("Write %v bytes to file\n", cqe.res)
+	t.Logf("Write %v bytes to file\n", cqe.Res)
 
 	buf := make([]byte, 1024)
 	r.SubmitRead(f.Fd(), buf, 0)
@@ -111,5 +111,5 @@ func TestSubmitWrite(t *testing.T) {
 	})
 
 	cqe := <-ch
-	t.Logf("Write %v bytes to file\n", cqe.res)
+	t.Logf("Write %v bytes to file\n", cqe.Res)
 }
