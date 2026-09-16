@@ -8,13 +8,13 @@ import (
 const DefaultEntries = 256 
 
 func NewRingDefault() (*Ring, syscall.Errno) {
-	var ring *Ring
+	ring := new(Ring)
 	errno := setup(DefaultEntries, ring, 0)
 	return ring, errno
 }
 
 func NewRingWithEntries(entries uint32) (*Ring, syscall.Errno) {
-	var ring *Ring
+	ring := new(Ring)
 	errno := setup(entries, ring, 0)
 	return ring, errno
 }
