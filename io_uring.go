@@ -147,7 +147,7 @@ func setup(entries uint32, r *Ring, flags uint32) syscall.Errno {
 }
 
 // SQ - Submissions Queue
-func (r *Ring) submitToSQ(op uint8, fd int32, addr uintptr, len uint32, offset uint64) int {
+func (r *Ring) submitToSQ(op uint8, fd int32, addr uintptr, len uint32, userData uint64) int {
 	tail := atomic.LoadUint32(r.sq.ktail)
 	index := tail & atomic.LoadUint32(r.sq.kringMask)
 
@@ -156,7 +156,7 @@ func (r *Ring) submitToSQ(op uint8, fd int32, addr uintptr, len uint32, offset u
 	sqe.fd = fd
 	sqe.addr = uint64(addr)
 	sqe.len = len
-	sqe.off = offset
+	sqe.userData = userData
 
 	r.sq.array[index] = index
 	tail += 1
