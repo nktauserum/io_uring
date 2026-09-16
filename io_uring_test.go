@@ -100,10 +100,7 @@ func TestSubmitWrite(t *testing.T) {
 
 	txt := []byte(wanted)
 
-	ret, success := r.SubmitWrite(f.Fd(), txt)
-	if !success {
-		t.Fail()
-	}
+	ret := r.SubmitWrite(f.Fd(), txt)
 	t.Logf("Submitted %v events to SQ\n", ret)
 
 	ch := make(chan cqe)
