@@ -1,15 +1,20 @@
 package io_uring
 
-// #include <signal.h>
 // #include <syscall.h>
 //
-// int syscall_nums(int *io_uring_setup, int *io_uring_enter) {
-// #if defined(__NR_io_uring_setup) && defined(__NR_io_uring_enter)
-//     *io_uring_setup = __NR_io_uring_setup;
-//     *io_uring_enter = __NR_io_uring_enter;
+// int get_setup_num(void) {
+// #if defined(__NR_io_uring_setup)
+//     return __NR_io_uring_setup;
 // #else
-//	   *io_uring_setup = -1;
-//	   *io_uring_enter = -1;
+//     return -1;
+// #endif
+// }
+//
+// int get_enter_num(void) {
+// #if defined(__NR_io_uring_enter)
+//     return __NR_io_uring_enter;
+// #else
+//     return -1;
 // #endif
 // }
 import "C"
@@ -35,8 +40,8 @@ const (
 )
 
 var ioUringSetupSys, ioUringEnterSys = func() (int, int) {
-	var ioSetupSys, ioEnterSys C.int
-	C.syscall_nums(&ioSetupSys, &ioEnterSys)
+	ioSetupSys := C.get_setup_num()
+	ioEnterSys := C.get_enter_num()
 	if ioSetupSys == -1 || ioEnterSys == -1 {
 		panic("io_uring is not supported")
 	}
